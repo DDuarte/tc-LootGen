@@ -6,7 +6,7 @@ import copy
 # TODO: Implement lootmodes
 
 # npc_entry, quest1, quest2, ... = argv
-npc_entry = 18728
+npc_entry = 19622
 
 with_quest_items = False
 
@@ -188,6 +188,50 @@ def GetLootTable(entry, cursor):
     return rows, references, refLinks
 
 
+def GetHtml(n, cursor):
+    rows, references, refLinks = GetLootTable(npc_entry, cursor)
+
+    # process
+
+    items = []
+    for i in range(0, iterNumber):
+        for item in ProcessLoot(rows, references, refLinks):
+            items.append(item)
+
+    hist = dict()
+    for item in items:
+        hist[item] = hist.get(item, 0) + 1
+
+    for i in hist:
+        hist[i] = [hist[i], hist[i] * 100.0 / iterNumber]
+
+    # print
+
+    result = "\n\n"
+    result += "<html>"
+    result += "<head>"
+    result += '<script type="text/javascript" src="http://static.wowhead.com/widgets/power.js"></script>'
+    result += '<script type="text/javascript" src="sorttable.js"></script>'
+    result += "</head>"
+    result += "<body>"
+    result += "<h3>Loot generated for %s - %i iterations</h3>" % (GetCreatureName(npc_entry, cursor), n)
+    result += '<table border="1" class="sortable">'
+    result += "<tr>"
+    result += "<th>Item</th>"
+    result += "<th>Count</th>"
+    result += "<th>Chance</th>"
+    result += "</tr>"
+    for entry in hist:
+        result += "<tr>"
+        result += "<td><a href=\"http://www.wowhead.com/item=%i\">%s</a></td>" % (entry, GetItemName(entry, cursor))
+        result += "<td>%d</td>" % hist[entry][0]
+        result += "<td>%f</td>" % hist[entry][1]
+        result += "</tr>"
+    result += "</table>"
+    result += "</body>"
+    result += "</html>"
+    return result
+
 ### main ###
 
 
@@ -197,18 +241,23 @@ try:
 
     rows, references, refLinks = GetLootTable(npc_entry, cur)
 
-    iterNumber = 10
+    iterNumber = 10000
 
-    print "-- Loot table for %s" % GetCreatureName(npc_entry, cur)
-    for key in rows:
-        print key
-        for row in rows[key]:
-            print "\t %s - %s" % (str(row), GetItemName(row[0], cur))
+    result = GetHtml(iterNumber, cur)
+    fileHtml = open("result.html", 'w')
+    fileHtml.write(result)
+    fileHtml.close()
 
-    for i in range(0, iterNumber):
-        print "\n%i -- Loot generated for %s" % (i, GetCreatureName(npc_entry, cur))
-        for item in ProcessLoot(rows, references, refLinks):
-            print "\t%i - %s" % (item, GetItemName(item, cur))
+    #print "-- Loot table for %s" % GetCreatureName(npc_entry, cur)
+    #for key in rows:
+    #    print key
+    #    for row in rows[key]:
+    #        print "\t %s - %s" % (str(row), GetItemName(row[0], cur))
+
+    #for i in range(0, iterNumber):
+    #    print "\n%i -- Loot generated for %s" % (i, GetCreatureName(npc_entry, cur))
+    #    for item in ProcessLoot(rows, references, refLinks):
+    #        print "\t%i - %s" % (item, GetItemName(item, cur))
 
     con.close()
 
