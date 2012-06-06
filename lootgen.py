@@ -8,7 +8,22 @@ import random
 # npc_entry, quest1, quest2, ... = argv
 npc_entry = 36538  # 1009  # 20324  # lich king
 
-# get names
+
+### random helpers ###
+
+
+def RandCount(minCount, maxCount):
+    if (maxCount <= 0):
+        print "maxCount is %i, invalid." % maxCount
+
+    return random.randrange(minCount, maxCount + 1)
+
+
+def RandChance(chance):
+    return random.uniform(0, 100) < chance
+
+
+### get names ###
 
 
 def GetCreatureName(entry, cursor):
@@ -21,7 +36,58 @@ def GetItemName(entry, cursor):
     return cursor.fetchone()[0]
 
 
-# table queries
+### loot processing ###
+
+def SplitIntoGroups(rows):
+    """Splits rows of a certain entry into a dictionary, key is groupid"""
+
+    groups = {}
+
+    for row in rows:
+        if row[3] in groups:
+            groups[row[3]].append(row)
+        else:
+            groups[row[3]] = [row]
+
+    return groups
+
+
+def CalculateChanceGroups(groups):
+    for group in groups:
+        sameChance = True
+        for row in groups[group]:
+            # assumes that a group will have all chances with 0 or no 0s at all
+            if row[1] != 0:
+                sameChance = False
+                break
+
+        if sameChance:
+            chance = 100.0 / len(groups[group])
+            for row in groups[group]:
+                row[1] = chance
+
+    return groups
+
+
+def ProcessReference(rows, chance, lootMode, groupId):
+
+    groups = SplitIntoGroups(rows)
+    CalculateChanceGroups(groups)
+
+    loot = []
+
+    return loot
+
+
+def ProcessLoot(rows, references, reflinks):
+    """Simulates ONE kill; returns a list of items dropped."""
+    loot = []
+
+    for ref in references:
+        loot.append(ProcessReference(rows[ref], references[ref][0], references[ref][1], references[ref][2]))
+
+    return loot
+
 
 def GetLootTableAux(entry, cursor, rows, references, referencesLinks):
     table = ""
@@ -77,77 +143,12 @@ def GetLootTable(entry, cursor):
     #print rows
     return rows
 
-# randomness
 
+### main ###
 
-def RandCount(minCount, maxCount):
-    if (maxCount <= 0):
-        print "maxCount is %i, invalid." % maxCount
-
-    return random.randrange(minCount, maxCount + 1)
-
-
-def RandChance(chance):
-    return random.uniform(0, 100) < chance
-
-
-def ProcessLoot(rows, references, reflinks):
-    """Simulates ONE kill; returns a list of items dropped."""
-    loot = []
-
-    for ref in references:
-        loot.append(ProcessReference(rows[ref], references[ref][0], references[ref][1], references[ref][2]))
-
-    return loot
-
-
-def SplitIntoGroups(rows):
-    """Splits rows of a certain entry into a dictionary, key is groupid"""
-
-    groups = {}
-
-    for row in rows:
-        if row[3] in groups:
-            groups[row[3]].append(row)
-        else:
-            groups[row[3]] = [row]
-
-    return groups
-
-
-def CalculateChanceGroups(groups):
-    for group in groups:
-        sameChance = True
-        for row in groups[group]:
-            # assumes that a group will have all chances with 0 or no 0s at all
-            if row[1] != 0:
-                sameChance = False
-                break
-
-        if sameChance:
-            chance = 100.0 / len(groups[group])
-            for row in groups[group]:
-                row[1] = chance
-
-    return groups
-
-
-def ProcessReference(rows, chance, lootMode, groupId):
-
-    groups = SplitIntoGroups(rows)
-    CalculateChanceGroups(groups)
-
-    lootRows = []
-    lootRows.append(random.sample(rows, 1))
-
-    loot = []
-    for row in lootRows[0]:
-        loot.append(row[0])
-
-    return loot
 
 try:
-    con = db.connect('localhost', 'root', '', 'world')
+    con = db.connect('localhost', 'root', 'root', 'world')
     cur = con.cursor()
 
     rows = GetLootTable(npc_entry, cur)
