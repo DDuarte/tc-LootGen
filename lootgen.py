@@ -6,7 +6,7 @@ import copy
 # TODO: Implement lootmodes
 
 # npc_entry, quest1, quest2, ... = argv
-npc_entry = 19622
+npc_entry = 18728
 
 with_quest_items = False
 
@@ -210,6 +210,8 @@ def GetHtml(n, cursor):
     result = "<html>\n"
     result += "<head>\n"
     result += '\t<script type="text/javascript" src="http://static.wowhead.com/widgets/power.js"></script>\n'
+    result += '\t<link href="tablecloth/tablecloth.css" rel="stylesheet" type="text/css" media="screen" />\n'
+    result += '\t<script type="text/javascript" src="tablecloth/tablecloth.js"></script>\n'
     result += '\t<script type="text/javascript" src="sorttable.js"></script>\n'
     result += "</head>\n"
     result += "<body>\n"
@@ -243,7 +245,7 @@ try:
     iterNumber = 10000
 
     result = GetHtml(iterNumber, cur)
-    fileHtml = open("result.html", 'w')
+    fileHtml = open("html/index.html", 'w')
     fileHtml.write(result)
     fileHtml.close()
 
