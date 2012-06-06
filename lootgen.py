@@ -39,6 +39,7 @@ def GetLootTableAux(entry, cursor, rows, references, referencesLinks):
     referencesEntries = []
 
     for row in rawData:
+        row = list(row)
         if row[4] < 0:
             referencesEntries.append(abs(row[4]))
             references[abs(row[4])] = [row[1], row[2], row[3], row[5]]
@@ -66,6 +67,9 @@ def GetLootTable(entry, cursor):
     references = dict()
     refLinks = dict()
     GetLootTableAux(entry, cursor, rows, references, refLinks)
+
+    references[0] = [100.0, 1, 1, 1]
+
     for i in range(0, 2):
         ProcessLoot(rows, references, refLinks)
     #print references
@@ -91,21 +95,50 @@ def ProcessLoot(rows, references, reflinks):
     """Simulates ONE kill; returns a list of items dropped."""
     loot = []
 
-    for row in rows[0]:
-        if RandChance(row[1]):
-            for i in range(0, RandCount(row[4], row[5])):
-                loot.append(row[0])
-
     for ref in references:
-        loot.append(ProcessReference(rows[ref], references[ref][0], references[ref][1], references[ref][2], references[ref][3])[0])
+        loot.append(ProcessReference(rows[ref], references[ref][0], references[ref][1], references[ref][2]))
 
-    print loot
+    return loot
 
 
-def ProcessReference(rows, chance, lootMode, groupId, maxCount):
+def SplitIntoGroups(rows):
+    """Splits rows of a certain entry into a dictionary, key is groupid"""
+
+    groups = {}
+
+    for row in rows:
+        if row[3] in groups:
+            groups[row[3]].append(row)
+        else:
+            groups[row[3]] = [row]
+
+    return groups
+
+
+def CalculateChanceGroups(groups):
+    for group in groups:
+        sameChance = True
+        for row in groups[group]:
+            # assumes that a group will have all chances with 0 or no 0s at all
+            if row[1] != 0:
+                sameChance = False
+                break
+
+        if sameChance:
+            chance = 100.0 / len(groups[group])
+            for row in groups[group]:
+                row[1] = chance
+
+    return groups
+
+
+def ProcessReference(rows, chance, lootMode, groupId):
+
+    groups = SplitIntoGroups(rows)
+    CalculateChanceGroups(groups)
+
     lootRows = []
-
-    lootRows.append(random.sample(rows, maxCount))
+    lootRows.append(random.sample(rows, 1))
 
     loot = []
     for row in lootRows[0]:
