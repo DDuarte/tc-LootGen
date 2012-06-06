@@ -66,16 +66,23 @@ def CalculateChanceGroups(groups):
     """Calculates chances if a group has all items with chance = 0"""
     for group in groups:
         sameChance = True
+        sumChance = 0
+        nonZero = 0
         for row in groups[group]:
-            # assumes that a group will have all chances with 0 or no 0s at all
+            sumChance += row[1]
             if row[1] != 0:
                 sameChance = False
-                break
+                nonZero += 1
+                continue
+
+        if sumChance >= 100 and sumChance <= 101:
+            sameChance = True
 
         if sameChance:
-            chance = 100.0 / len(groups[group])
+            chance = (100.0 - sumChance) / (len(groups[group]) - nonZero)
             for row in groups[group]:
-                row[1] = chance
+                if row[1] == 0:
+                    row[1] = chance
 
         groups[group] = [groups[group], sameChance]
 
