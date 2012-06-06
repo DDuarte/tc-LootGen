@@ -74,12 +74,14 @@ def CalculateChanceGroups(groups):
     return groups
 
 
-def ProcessReference(rows, chance, lootMode, groupId):
+def ProcessReference(rows, lootMode, groupId):
 
     groups = SplitIntoGroups(rows)
     CalculateChanceGroups(groups)
 
     loot = []
+
+    #for group in groups:
 
     return loot
 
@@ -89,7 +91,10 @@ def ProcessLoot(rows, references, reflinks):
     loot = []
 
     for ref in references:
-        loot.append(ProcessReference(rows[ref], references[ref][0], references[ref][1], references[ref][2]))
+        if RandChance(references[ref][0]):  # ChanceOrQuestChance for references,
+                                            # there's a certain chance of not processing references at all
+            for i in range(0, references[ref][3]):  # maxcount for references, process reference X times
+                loot.append(ProcessReference(rows[ref], references[ref][1], references[ref][2]))
 
     return loot
 
@@ -155,7 +160,7 @@ try:
 
     rows, references, refLinks = GetLootTable(npc_entry, cur)
 
-    iterNumber = 5
+    iterNumber = 2
 
     for i in range(0, iterNumber):
         ProcessLoot(rows, references, refLinks)
