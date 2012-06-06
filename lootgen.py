@@ -6,7 +6,7 @@ import copy
 # TODO: Implement lootmodes
 
 # npc_entry, quest1, quest2, ... = argv
-npc_entry = 36597  # lich king
+npc_entry = 18728
 
 with_quest_items = False
 
@@ -73,7 +73,6 @@ def CalculateChanceGroups(groups):
                 break
 
         if sameChance:
-
             chance = 100.0 / len(groups[group])
             for row in groups[group]:
                 row[1] = chance
@@ -125,10 +124,8 @@ def ProcessLoot(rows, references, reflinks):
                                             # there's a certain chance of not processing references at all
             for i in range(0, references[ref][3]):  # maxcount for references, process reference X times
                 if ref in rows:
-                    newLoot = ProcessReference(rows[ref])
-                    if newLoot:
-                        for l in newLoot:
-                            loot.append(l)
+                    for l in ProcessReference(rows[ref]):
+                        loot.append(l)
 
     return loot
 
@@ -137,7 +134,7 @@ def GetLootTableAux(entry, cursor, rows, references, referencesLinks):
     """Auxiliar method of GetLootTable"""
     table = ""
     refEntry = 0
-    if not rows:
+    if not rows and not references and not referencesLinks:
         table = "creature_loot_template"
     else:
         table = "reference_loot_template"
@@ -159,7 +156,6 @@ def GetLootTableAux(entry, cursor, rows, references, referencesLinks):
                 referencesLinks[refEntry].append(abs(row[4]))
             else:
                 referencesLinks[refEntry] = [abs(row[4])]
-
         else:
             if refEntry in rows:
                 rows[refEntry].append(row)
