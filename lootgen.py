@@ -207,29 +207,28 @@ def GetHtml(n, cursor):
 
     # print
 
-    result = "\n\n"
-    result += "<html>"
-    result += "<head>"
-    result += '<script type="text/javascript" src="http://static.wowhead.com/widgets/power.js"></script>'
-    result += '<script type="text/javascript" src="sorttable.js"></script>'
-    result += "</head>"
-    result += "<body>"
-    result += "<h3>Loot generated for %s - %i iterations</h3>" % (GetCreatureName(npc_entry, cursor), n)
-    result += '<table border="1" class="sortable">'
-    result += "<tr>"
-    result += "<th>Item</th>"
-    result += "<th>Count</th>"
-    result += "<th>Chance</th>"
-    result += "</tr>"
+    result = "<html>\n"
+    result += "<head>\n"
+    result += '\t<script type="text/javascript" src="http://static.wowhead.com/widgets/power.js"></script>\n'
+    result += '\t<script type="text/javascript" src="sorttable.js"></script>\n'
+    result += "</head>\n"
+    result += "<body>\n"
+    result += "\t<h3>Loot generated for %s - %i iterations</h3>\n" % (GetCreatureName(npc_entry, cursor), n)
+    result += '\t<table border="1" class="sortable">\n'
+    result += "\t\t<tr>\n"
+    result += "\t\t\t<th>Item</th>\n"
+    result += "\t\t\t<th>Count</th>\n"
+    result += "\t\t\t<th>Chance</th>\n"
+    result += "\t\t</tr>\n"
     for entry in hist:
-        result += "<tr>"
-        result += "<td><a href=\"http://www.wowhead.com/item=%i\">%s</a></td>" % (entry, GetItemName(entry, cursor))
-        result += "<td>%d</td>" % hist[entry][0]
-        result += "<td>%f</td>" % hist[entry][1]
-        result += "</tr>"
-    result += "</table>"
-    result += "</body>"
-    result += "</html>"
+        result += "\t\t<tr>\n"
+        result += "\t\t\t<td><a href=\"http://www.wowhead.com/item=%i\">%s</a></td>\n" % (entry, GetItemName(entry, cursor))
+        result += "\t\t\t<td>%d</td>\n" % hist[entry][0]
+        result += "\t\t\t<td>%f</td>\n" % hist[entry][1]
+        result += "\t\t</tr>\n"
+    result += "\t</table>\n"
+    result += "</body>\n"
+    result += "</html>\n\n"
     return result
 
 ### main ###
