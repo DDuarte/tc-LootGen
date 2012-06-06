@@ -6,7 +6,9 @@ import random
 # TODO: Implement groups with groupid
 
 # npc_entry, quest1, quest2, ... = argv
-npc_entry = 36538  # 1009  # 20324  # lich king
+npc_entry = 36597  # lich king
+
+with_quest_items = False
 
 
 ### random helpers ###
@@ -22,7 +24,11 @@ def RandCount(minCount, maxCount):
 
 def RandChance(chance):
     """There's a chance% of this returning True"""
-    return random.uniform(0, 100) < chance
+
+    if with_quest_items:
+        return random.uniform(0, 100) < abs(chance)
+    else:
+        return random.uniform(0, 100) < chance
 
 
 ### get names ###
@@ -81,7 +87,11 @@ def ProcessReference(rows, lootMode, groupId):
 
     loot = []
 
-    #for group in groups:
+    for group in groups:
+        for row in groups[group]:
+            if RandChance(row[1]):
+                for i in range(0, RandCount(row[4], row[5])):
+                    loot.append(row[0])
 
     return loot
 
@@ -94,7 +104,10 @@ def ProcessLoot(rows, references, reflinks):
         if RandChance(references[ref][0]):  # ChanceOrQuestChance for references,
                                             # there's a certain chance of not processing references at all
             for i in range(0, references[ref][3]):  # maxcount for references, process reference X times
-                loot.append(ProcessReference(rows[ref], references[ref][1], references[ref][2]))
+                newLoot = ProcessReference(rows[ref], references[ref][1], references[ref][2])
+                if newLoot:
+                    for l in newLoot:
+                        loot.append(l)
 
     return loot
 
@@ -160,16 +173,18 @@ try:
 
     rows, references, refLinks = GetLootTable(npc_entry, cur)
 
-    iterNumber = 2
-
-    for i in range(0, iterNumber):
-        ProcessLoot(rows, references, refLinks)
+    iterNumber = 10
 
     print "-- Loot table for %s" % GetCreatureName(npc_entry, cur)
     for key in rows:
         print key
         for row in rows[key]:
             print "\t %s - %s" % (str(row), GetItemName(row[0], cur))
+
+    for i in range(0, iterNumber):
+        print "\n%i -- Loot generated for %s" % (i, GetCreatureName(npc_entry, cur))
+        for item in ProcessLoot(rows, references, refLinks):
+            print "\t%i - %s" % (item, GetItemName(item, cur))
 
     con.close()
 
