@@ -13,13 +13,15 @@ npc_entry = 36538  # 1009  # 20324  # lich king
 
 
 def RandCount(minCount, maxCount):
-    if (maxCount <= 0):
+    """Random value between minCount and maxCount (inclusive)"""
+    if (maxCount <= 0 or maxCount > minCount):
         print "maxCount is %i, invalid." % maxCount
 
     return random.randrange(minCount, maxCount + 1)
 
 
 def RandChance(chance):
+    """There's a chance% of this returning True"""
     return random.uniform(0, 100) < chance
 
 
@@ -27,11 +29,13 @@ def RandChance(chance):
 
 
 def GetCreatureName(entry, cursor):
+    """ Returns the name of a creature"""
     cursor.execute("SELECT `name` FROM `creature_template` WHERE `entry`=%d LIMIT 1" % entry)
     return cursor.fetchone()[0]
 
 
 def GetItemName(entry, cursor):
+    """Returns the name of an item"""
     cursor.execute("SELECT `name` FROM `item_template` WHERE `entry`=%d LIMIT 1" % entry)
     return cursor.fetchone()[0]
 
@@ -53,6 +57,7 @@ def SplitIntoGroups(rows):
 
 
 def CalculateChanceGroups(groups):
+    """Calculates chances if a group has all items with chance = 0"""
     for group in groups:
         sameChance = True
         for row in groups[group]:
@@ -90,6 +95,7 @@ def ProcessLoot(rows, references, reflinks):
 
 
 def GetLootTableAux(entry, cursor, rows, references, referencesLinks):
+    """Auxiliar method of GetLootTable"""
     table = ""
     refEntry = 0
     if not rows:
@@ -129,6 +135,7 @@ def GetLootTableAux(entry, cursor, rows, references, referencesLinks):
 
 
 def GetLootTable(entry, cursor):
+    """Gets the full loot table from DB, including references"""
     rows = dict()
     references = dict()
     refLinks = dict()
@@ -136,12 +143,7 @@ def GetLootTable(entry, cursor):
 
     references[0] = [100.0, 1, 1, 1]
 
-    for i in range(0, 2):
-        ProcessLoot(rows, references, refLinks)
-    #print references
-    #print refLinks
-    #print rows
-    return rows
+    return rows, references, refLinks
 
 
 ### main ###
@@ -151,7 +153,12 @@ try:
     con = db.connect('localhost', 'root', 'root', 'world')
     cur = con.cursor()
 
-    rows = GetLootTable(npc_entry, cur)
+    rows, references, refLinks = GetLootTable(npc_entry, cur)
+
+    iterNumber = 5
+
+    for i in range(0, iterNumber):
+        ProcessLoot(rows, references, refLinks)
 
     print "-- Loot table for %s" % GetCreatureName(npc_entry, cur)
     for key in rows:
