@@ -1,9 +1,9 @@
 import MySQLdb as db
 import sys
 import random
+import copy
 
 # TODO: Implement lootmodes
-# TODO: Implement groups with groupid
 
 # npc_entry, quest1, quest2, ... = argv
 npc_entry = 36597  # lich king
@@ -73,25 +73,45 @@ def CalculateChanceGroups(groups):
                 break
 
         if sameChance:
+
             chance = 100.0 / len(groups[group])
             for row in groups[group]:
                 row[1] = chance
 
+        groups[group] = [groups[group], sameChance]
+
     return groups
 
 
-def ProcessReference(rows, lootMode, groupId):
-
+def ProcessReference(rowsOri):
+    rows = copy.deepcopy(rowsOri)
     groups = SplitIntoGroups(rows)
-    CalculateChanceGroups(groups)
+    groups = CalculateChanceGroups(groups)
 
     loot = []
 
     for group in groups:
-        for row in groups[group]:
-            if RandChance(row[1]):
-                for i in range(0, RandCount(row[4], row[5])):
-                    loot.append(row[0])
+        gotItem = False
+        forceDrop = groups[group][1]
+        groupZero = group == 0
+
+        while True:
+
+            if gotItem and not groupZero:
+                break
+
+            if forceDrop and gotItem:
+                break
+
+            for row in groups[group][0]:
+                    if (not gotItem or groupZero) and RandChance(row[1]):
+                        for i in range(0, RandCount(row[4], row[5])):
+                            loot.append(row[0])
+                            gotItem = True
+                            break
+
+            if groupZero:
+                break
 
     return loot
 
@@ -104,7 +124,7 @@ def ProcessLoot(rows, references, reflinks):
         if RandChance(references[ref][0]):  # ChanceOrQuestChance for references,
                                             # there's a certain chance of not processing references at all
             for i in range(0, references[ref][3]):  # maxcount for references, process reference X times
-                newLoot = ProcessReference(rows[ref], references[ref][1], references[ref][2])
+                newLoot = ProcessReference(rows[ref])
                 if newLoot:
                     for l in newLoot:
                         loot.append(l)
