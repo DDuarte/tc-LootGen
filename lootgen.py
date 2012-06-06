@@ -16,8 +16,8 @@ with_quest_items = False
 
 def RandCount(minCount, maxCount):
     """Random value between minCount and maxCount (inclusive)"""
-    if (maxCount <= 0 or maxCount > minCount):
-        print "maxCount is %i, invalid." % maxCount
+    if (maxCount <= 0 or maxCount < minCount):
+        print "counts (%i,%i) are invalid." % (minCount, maxCount)
 
     return random.randrange(minCount, maxCount + 1)
 
@@ -124,10 +124,11 @@ def ProcessLoot(rows, references, reflinks):
         if RandChance(references[ref][0]):  # ChanceOrQuestChance for references,
                                             # there's a certain chance of not processing references at all
             for i in range(0, references[ref][3]):  # maxcount for references, process reference X times
-                newLoot = ProcessReference(rows[ref])
-                if newLoot:
-                    for l in newLoot:
-                        loot.append(l)
+                if ref in rows:
+                    newLoot = ProcessReference(rows[ref])
+                    if newLoot:
+                        for l in newLoot:
+                            loot.append(l)
 
     return loot
 
