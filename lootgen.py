@@ -86,8 +86,7 @@ def CalculateChanceGroups(groups):
     return groups
 
 
-def ProcessReference(rowsOri):
-    rows = copy.deepcopy(rowsOri)
+def ProcessReference(rows):
     groups = SplitIntoGroups(rows)
     groups = CalculateChanceGroups(groups)
 
