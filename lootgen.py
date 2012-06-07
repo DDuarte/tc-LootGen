@@ -239,14 +239,14 @@ if __name__ == "__main__":
         con = db.connect('localhost', 'root', 'root', 'world')
         cursor = con.cursor()
 
-        cursor.execute("SELECT `entry` FROM `creature_template` WHERE `lootid`!=0")
+        cursor.execute("SELECT `entry` FROM `creature_template` WHERE `lootid`!=0;")
         entries = cursor.fetchall()
 
-        iterNumber = 10000
+        iterNumber = 5000
 
         for i in entries:
             print i
-            fileHtml = open("html/c%d.html" % i[0], 'w')
+            fileHtml = open("html\c%d.html" % i[0], 'w+')
             fileHtml.write(GetHtml(iterNumber, i[0], cursor))
             fileHtml.close()
 
