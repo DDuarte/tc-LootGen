@@ -1,14 +1,9 @@
 import MySQLdb as db
-import sys
 import random
 import copy
 
 # TODO: Implement lootmodes
-
 # npc_entry, quest1, quest2, ... = argv
-npc_entry = 18728
-
-with_quest_items = False
 
 
 ### random helpers ###
@@ -25,7 +20,7 @@ def RandCount(minCount, maxCount):
 def RandChance(chance):
     """There's a chance% of this returning True"""
 
-    if with_quest_items:
+    if False:  # if withQuestItems, make this configurable
         return random.uniform(0, 100) < abs(chance)
     else:
         return random.uniform(0, 100) < chance
@@ -47,6 +42,7 @@ def GetItemName(entry, cursor):
 
 
 ### loot processing ###
+
 
 def SplitIntoGroups(rows):
     """Splits rows of a certain entry into a dictionary, key is groupid"""
@@ -79,10 +75,11 @@ def CalculateChanceGroups(groups):
             sameChance = True
 
         if sameChance:
-            chance = (100.0 - sumChance) / (len(groups[group]) - nonZero)
-            for row in groups[group]:
-                if row[1] == 0:
-                    row[1] = chance
+            if nonZero != len(groups[group]):
+                chance = (100.0 - sumChance) / (len(groups[group]) - nonZero)
+                for row in groups[group]:
+                    if row[1] == 0:
+                        row[1] = chance
 
         groups[group] = [groups[group], sameChance]
 
@@ -188,10 +185,10 @@ def GetLootTable(entry, cursor):
     return rows, references, refLinks
 
 
-def GetHtml(n, cursor):
-    rows, references, refLinks = GetLootTable(npc_entry, cursor)
-
+def GetHtml(n, entry, cursor):
     # process
+
+    rows, references, refLinks = GetLootTable(entry, cursor)
 
     items = []
     for i in range(0, iterNumber):
@@ -205,6 +202,8 @@ def GetHtml(n, cursor):
     for i in hist:
         hist[i] = [hist[i], hist[i] * 100.0 / iterNumber]
 
+    name = GetCreatureName(entry, cursor)
+
     # print
 
     result = "<html>\n"
@@ -215,18 +214,18 @@ def GetHtml(n, cursor):
     result += '\t<script type="text/javascript" src="sorttable.js"></script>\n'
     result += "</head>\n"
     result += "<body>\n"
-    result += "\t<h3>Loot generated for %s - %i iterations</h3>\n" % (GetCreatureName(npc_entry, cursor), n)
+    result += "\t<h3>Loot generated for %s - %i iterations</h3>\n" % (name, n)
     result += '\t<table border="1" class="sortable">\n'
     result += "\t\t<tr>\n"
     result += "\t\t\t<th>Item</th>\n"
     result += "\t\t\t<th>Count</th>\n"
     result += "\t\t\t<th>Chance</th>\n"
     result += "\t\t</tr>\n"
-    for entry in hist:
+    for it in hist:
         result += "\t\t<tr>\n"
-        result += "\t\t\t<td><a href=\"http://www.wowhead.com/item=%i\">%s</a></td>\n" % (entry, GetItemName(entry, cursor))
-        result += "\t\t\t<td>%d</td>\n" % hist[entry][0]
-        result += "\t\t\t<td>%f</td>\n" % hist[entry][1]
+        result += "\t\t\t<td><a href=\"http://www.wowhead.com/item=%i\">%s</a></td>\n" % (it, GetItemName(it, cursor))
+        result += "\t\t\t<td>%d</td>\n" % hist[it][0]
+        result += "\t\t\t<td>%f</td>\n" % hist[it][1]
         result += "\t\t</tr>\n"
     result += "\t</table>\n"
     result += "</body>\n"
@@ -235,33 +234,37 @@ def GetHtml(n, cursor):
 
 ### main ###
 
+if __name__ == "__main__":
 
-try:
-    con = db.connect('localhost', 'root', 'root', 'world')
-    cur = con.cursor()
+    #try:
+        con = db.connect('localhost', 'root', 'root', 'world')
+        cursor = con.cursor()
 
-    rows, references, refLinks = GetLootTable(npc_entry, cur)
+        cursor.execute("SELECT `entry` FROM `creature_template` WHERE `lootid`!=0")
+        entries = cursor.fetchall()
 
-    iterNumber = 10000
+        iterNumber = 10000
 
-    result = GetHtml(iterNumber, cur)
-    fileHtml = open("html/index.html", 'w')
-    fileHtml.write(result)
-    fileHtml.close()
+        for i in entries:
+            print i
+            fileHtml = open("html/c%d.html" % i[0], 'w')
+            fileHtml.write(GetHtml(iterNumber, i[0], cursor))
+            fileHtml.close()
 
-    #print "-- Loot table for %s" % GetCreatureName(npc_entry, cur)
-    #for key in rows:
-    #    print key
-    #    for row in rows[key]:
-    #        print "\t %s - %s" % (str(row), GetItemName(row[0], cur))
+        # print the raw table data from db
+        #print "-- Loot table for %s" % GetCreatureName(npc_entry, cur)
+        #for key in rows:
+        #    print key
+        #    for row in rows[key]:
+        #        print "\t %s - %s" % (str(row), GetItemName(row[0], cur))
 
-    #for i in range(0, iterNumber):
-    #    print "\n%i -- Loot generated for %s" % (i, GetCreatureName(npc_entry, cur))
-    #    for item in ProcessLoot(rows, references, refLinks):
-    #        print "\t%i - %s" % (item, GetItemName(item, cur))
+        #for i in range(0, iterNumber):
+        #    print "\n%i -- Loot generated for %s" % (i, GetCreatureName(npc_entry, cur))
+        #    for item in ProcessLoot(rows, references, refLinks):
+        #        print "\t%i - %s" % (item, GetItemName(item, cur))
 
-    con.close()
+        con.close()
 
-except db.Error, e:
-    print "Error %d: %s" % (e.args[0], e.args[1])
-    sys.exit(1)
+    #except db.Error, e:
+    #    print "Error %d: %s" % (e.args[0], e.args[1])
+    #    sys.exit(1)
